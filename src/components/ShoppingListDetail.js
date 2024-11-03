@@ -1,59 +1,85 @@
+// src/components/ShoppingListDetail.js
 import React, { useState } from 'react';
-
-const initialData = {
-  name: "Můj nákupní seznam",
-  items: [
-    { id: 1, name: "Mléko", completed: false },
-    { id: 2, name: "Chléb", completed: true },
-    { id: 3, name: "Máslo", completed: false },
-  ],
-  owner: true,  // Indikuje, zda je aktuální uživatel vlastníkem seznamu
-};
+import { shoppingListData } from '../data';
 
 function ShoppingListDetail() {
-  const [list, setList] = useState(initialData);
+  const [shoppingList, setShoppingList] = useState(shoppingListData);
+  const [newItemName, setNewItemName] = useState("");
 
-  // Funkce pro přidání položky
-  const addItem = (itemName) => {
-    setList(prevList => ({
-      ...prevList,
-      items: [...prevList.items, { id: Date.now(), name: itemName, completed: false }]
-    }));
+  // Funkce pro změnu názvu seznamu (pouze pokud je uživatel vlastníkem)
+  const handleNameChange = (e) => {
+    if (shoppingList.owner === "user123") {
+      setShoppingList({ ...shoppingList, name: e.target.value });
+    }
   };
 
-  // Funkce pro odebrání položky
+  // Přidání nové položky
+  const addItem = () => {
+    if (newItemName.trim() !== "") {
+      const newItem = {
+        id: shoppingList.items.length + 1,
+        name: newItemName,
+        resolved: false,
+      };
+      setShoppingList({
+        ...shoppingList,
+        items: [...shoppingList.items, newItem],
+      });
+      setNewItemName("");
+    }
+  };
+
+  // Odebrání položky
   const removeItem = (itemId) => {
-    setList(prevList => ({
-      ...prevList,
-      items: prevList.items.filter(item => item.id !== itemId)
-    }));
+    setShoppingList({
+      ...shoppingList,
+      items: shoppingList.items.filter((item) => item.id !== itemId),
+    });
   };
 
-  // Funkce pro označení položky jako vyřešené
-  const toggleItemCompleted = (itemId) => {
-    setList(prevList => ({
-      ...prevList,
-      items: prevList.items.map(item => item.id === itemId ? { ...item, completed: !item.completed } : item)
-    }));
+  // Nastavení položky jako vyřešené/nevyřešené
+  const toggleItemResolved = (itemId) => {
+    setShoppingList({
+      ...shoppingList,
+      items: shoppingList.items.map((item) =>
+        item.id === itemId ? { ...item, resolved: !item.resolved } : item
+      ),
+    });
   };
+
+  // Filtr nevyřešených položek
+  const unresolvedItems = shoppingList.items.filter(item => !item.resolved);
 
   return (
     <div>
-      <h1>{list.name}</h1>
-      {list.items.map(item => (
-        <div key={item.id}>
-          <span style={{ textDecoration: item.completed ? "line-through" : "none" }}>
-            {item.name}
-          </span>
-          <button onClick={() => toggleItemCompleted(item.id)}>
-            {item.completed ? "Označit jako nevyřešené" : "Označit jako vyřešené"}
-          </button>
-          <button onClick={() => removeItem(item.id)}>Odebrat</button>
-        </div>
-      ))}
-      {list.owner && (
-        <button onClick={() => addItem("Nová položka")}>Přidat položku</button>
-      )}
+      <h1>Nákupní seznam: <input type="text" value={shoppingList.name} onChange={handleNameChange} /></h1>
+      <h2>Položky:</h2>
+      <ul>
+        {shoppingList.items.map((item) => (
+          <li key={item.id}>
+            <span style={{ textDecoration: item.resolved ? "line-through" : "none" }}>
+              {item.name}
+            </span>
+            <button onClick={() => toggleItemResolved(item.id)}>
+              {item.resolved ? "Neoznačit jako vyřešené" : "Označit jako vyřešené"}
+            </button>
+            <button onClick={() => removeItem(item.id)}>Odebrat</button>
+          </li>
+        ))}
+      </ul>
+      <h2>Přidat novou položku:</h2>
+      <input
+        type="text"
+        value={newItemName}
+        onChange={(e) => setNewItemName(e.target.value)}
+      />
+      <button onClick={addItem}>Přidat</button>
+      <h3>Neřešené položky:</h3>
+      <ul>
+        {unresolvedItems.map((item) => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
     </div>
   );
 }
